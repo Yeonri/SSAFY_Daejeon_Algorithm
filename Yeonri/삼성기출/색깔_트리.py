@@ -79,8 +79,6 @@ def calculate_value(current_id):
         colors.update(child_colors)
 
     return colors
-
-
 # 각 노드에 대한 고유 색상값을 가져와서 점수 계산
 def total_score():
     total = 0
@@ -93,10 +91,10 @@ def total_score():
 
 # 모든 노드들을 돌면서 선택된 노드의 모든 자식들을 다시 탐색하게 된다.
 # 최악의 경우 O(100000 * 100000)
-
+#
 # 이를 개선하기 위해서 모든 노드들을 선택해서 다시 모든 자식들을 탐색는 것을 막아야 한다.
 # 하나하나의 노드에 대해서 자식들의 colors를 전부 반환 받아 그 자리에서 점수를 조회한다.
-
+#
 # dfs를 이용해서 자식들의 컬러들을 반환 받은 후, 점수를 계산한다.
 
 def dfs_score(node):
