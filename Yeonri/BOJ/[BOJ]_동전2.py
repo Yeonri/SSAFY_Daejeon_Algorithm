@@ -1,25 +1,17 @@
 N, K = map(int, input().split())
-
-coins = []
-
-for _ in range(N):
-    coins.append(int(input()))
-
-dp = [0] * (K + 1)
+coins = [int(input()) for _ in range(N)]
 
 
-for j in range(1, K + 1):
-    if j % coins[0] == 0:
-        dp[j] = dp[j - 1] + 1
-    else:
-        dp[j] = dp[j - 1]
+dp = [float('inf')] * (K + 1)
+dp[0] = 0
 
-for i in range(N):
-    for j in range(1, K + 1):
-        
-        if j % coins[i] == 0: 
-            dp[j] = 1
+for i in range(1, K + 1):
+    for coin in coins:
+        if coin <= i:
+            dp[i] = min(dp[i], dp[i - coin] + 1)
 
 
-print(dp)
-print(dp[-1])
+if dp[K] == float('inf'):
+    print(-1)
+else:
+    print(dp[K])
