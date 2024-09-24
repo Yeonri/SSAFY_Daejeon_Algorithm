@@ -18,24 +18,51 @@ from collections import deque
 from collections import defaultdict
 from copy import deepcopy
 
-DXY = [(1, 0), (0, 1), (0, -1)]
+DXY = [(1, 0), (-1, 0),(0, 1), (0, -1)]
 
-def is_valid(x, y):
-    return 0 <= x < N and 0 <= y < N
+def rotate(matrix, init_i, init_j):
+    new_matrix = [x[:] for x in matrix] # 복사한 메트릭스를 다시 복사
 
-def chk_spin(matrix, lst, spin_count, x, y):
-    # 처음 유물 체크
-    # 방향 회전
-    # 유물 체크
+    for i in range(-1, 2):
+        for j in range(-1, 2):
+            new_matrix[init_i + j][init_j - i] = matrix[init_i + i][init_j + j]
 
-    # return (회전 값, 최종 값)
+    return new_matrix
 
-    pass
 
-def chk_number(matrix):
-    visited = defaultdict(list)
+def bfs(matrix, visited, i, j, flag):
+    s_x, s_y = (i, j)
+    queue = deque([(s_x, s_y)])
 
-    # 각 번호에 대한 값을 저장하도록 만든다.
+    tmp_dir = set()
+    tmp_dir.add((s_x, s_y))
+    visited.add((s_x, s_y))
+
+    count = 1
+
+    while queue:
+        x, y = queue.popleft()
+
+        for dx, dy in DXY:
+            nx, ny = x + dx, y + dy
+
+            if 0 <= nx < N and 0 <= ny < N and (nx, ny) not in visited and matrix[x][y] == matrix[nx][ny]:
+                tmp_dir.add((nx, ny))
+                visited.add((nx, ny))
+                count += 1
+                queue.append((nx, ny))
+
+    if count >= 3:
+        if flag:
+            for x, y in tmp_dir:
+                matrix[x][y] = 0
+        return count
+    return 0
+
+
+def chk_matrix(matrix, flag):
+
+    # 각 방문 좌표들을 vistied set에 저장
     # 탐색을 전체 값에 대해 하지 않고, 회전한 값들에 대해서만 탐색을 하도록 만든다.
     # 모든 방향에 대해서 탐색을 진행하도록 한다.
 
@@ -44,40 +71,15 @@ def chk_number(matrix):
 
     # 따라서 모든 좌표를 탐색하도록 설정을 먼저 해본다.
 
+    visited = set()
+    result = 0
+
     for i in range(N):
         for j in range(N):
-            s_x, s_y = (i, j)
+            if (i, j) not in visited:
+                result += bfs(matrix, visited, i, j, flag)
 
-            queue = deque([(s_x, s_y)])
-
-            tmp_dir = set()
-            tmp_dir.add((s_x, s_y))
-
-            count = 1
-
-            while queue:
-
-                x, y = queue.popleft()
-
-                for dx, dy in DXY:
-                    nx, ny = x + dx, y + dy
-
-                    if not is_valid(nx, ny): continue
-                    if matrix[x][y] != matrix[nx][ny]: continue
-
-                    tmp_dir.add((nx, ny))
-                    count += 1
-                    queue.append((nx, ny))
-
-            if count >= 3:
-                if matrix[x][y] not in visited:
-                    visited[matrix[x][y]].append((count, tmp_dir))
-
-                else:
-                    tmp_count, _ = visited[matrix[x][y]]
-                    if tmp_count < count:
-                        visited[matrix[x][y]] = [(count, tmp_dir)]
-
+    return result
 
 
 N = 5 # 매트릭스 크기
@@ -87,20 +89,48 @@ K, M = map(int, input().split())
 matrix = [list(map(int, input().split()))for _ in range(N)]
 pre_number = deque(list(map(int, input().split())))
 
-result = {} # (번호, 회전수, 최종 값)
+result = []
 
-count = 0
+for _ in range(K): # 탐색 횟수
+    max_count = 0
+    for rotation_count in range(1, 4):
+        for init_j in range(1, N-1): # 중심 좌표 선택
+            for init_i in range(1, N-1):
 
-for j in range(1,N-1):
-    for i in range(1,N-1):
-        for k in range(3):
+                new_matrix = [x[:] for x in matrix] # 깊은 복사
 
-            tmp_matrix = deepcopy(matrix)
-            tmp_number = pre_number[:]
+                for _ in range(rotation_count): # 회전 횟수 만큼 회전
+                    new_matrix = rotate(new_matrix, init_i, init_j)
 
-            # 매트릭스, 유물 번호, 회전 값, x, y
-            # chk_spin()
-            result.add((count, chk_spin(matrix, tmp_number, k, i, j)))
+                # 최대 값을 가지는 matrix를 먼저 확인할 수 있도록 flag 설정
+                # False는 유물 발굴을 하지 않는다.
+                tmp_count = chk_matrix(new_matrix, False)
 
-            # 최대 값이 같을 때, count를 기준으로 순서를 체크한다.
-            count += 1
+                if max_count < tmp_count:
+                    max_count = tmp_count
+                    result_matrix = new_matrix
+
+    if max_count == 0:
+        break
+
+    count = 0
+
+    # 최종적으로 선택된 matrix를 이용해서 유물 발굴을 시작
+
+    while True:
+        t = chk_matrix(result_matrix, True)
+        if t == 0:
+            break
+        count += t
+
+        for j in range(N):
+            for i in range(4, -1, -1):
+                if result_matrix[i][j] == 0:
+                    result_matrix[i][j] = pre_number.popleft()
+
+    result.append(count)
+    
+    # 다음 단계를 위해 result_matrix를 원본 matrix에 저장
+    matrix = result_matrix
+
+print(*result)
